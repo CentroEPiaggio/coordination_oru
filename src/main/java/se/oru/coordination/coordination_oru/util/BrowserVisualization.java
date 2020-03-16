@@ -41,6 +41,7 @@ public class BrowserVisualization implements FleetVisualization {
 
 	public BrowserVisualization(double collision_radius)
 	{
+		this("localhost", 30);
 		this.COLLISION_RADIUS = collision_radius;
 	}
 
