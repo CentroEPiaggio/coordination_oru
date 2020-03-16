@@ -21,6 +21,8 @@ public class TestTrajectoryEnvelopeCoordinatorThreeRobots_UNIPI {
 
 		double MAX_ACCEL = 1.0;
 		double MAX_VEL = 4.0;
+		// Radius to be considered for distributed collision avoidance checkings
+		double RADIUS_LOCAL = 10;
 		//Instantiate a trajectory envelope coordinator.
 		//The TrajectoryEnvelopeCoordinatorSimulation implementation provides
 		// -- the factory method getNewTracker() which returns a trajectory envelope tracker
@@ -56,7 +58,8 @@ public class TestTrajectoryEnvelopeCoordinatorThreeRobots_UNIPI {
 		//JTSDrawingPanelVisualization viz = new JTSDrawingPanelVisualization();
 		//RVizVisualization.writeRVizConfigFile(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26);
 		//RVizVisualization viz = new RVizVisualization();
-		BrowserVisualization viz = new BrowserVisualization();
+		// BrowserVisualization viz = new BrowserVisualization();
+		BrowserVisualization viz = new BrowserVisualization(RADIUS_LOCAL);
 		viz.setInitialTransform(19, 56.5, 35.17);
 		tec.setVisualization(viz);
 		

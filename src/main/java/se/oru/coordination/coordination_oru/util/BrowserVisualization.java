@@ -36,6 +36,13 @@ public class BrowserVisualization implements FleetVisualization {
 	private double robotFootprintArea = -1;
 	private double robotFootprintXDim = -1;
 	private String overlayText = null;
+	private double COLLISION_RADIUS = -1;
+
+
+	public BrowserVisualization(double collision_radius)
+	{
+		this.COLLISION_RADIUS = collision_radius;
+	}
 
 	public BrowserVisualization() {
 		this("localhost", 30);
@@ -217,6 +224,10 @@ public class BrowserVisualization implements FleetVisualization {
 		String jsonStringArrow = "{ \"operation\" : \"addGeometry\", \"data\" : " + this.geometryToJSONString("_"+name, arrowGeom, "#ffffff", -1, true, null) + "}";
 		enqueueMessage(jsonString);
 		enqueueMessage(jsonStringArrow);
+
+		// use COLLISION_RADIUS
+		// Geometry circleGeom =
+		// String jsonStringCircle = "{ \"operation\" : \"addGeometry\", \"data\" : " + this.geometryToJSONString(name, geom, "#ff0000", -1, true, extraData) + "}";
 	}
 
 	@Override
