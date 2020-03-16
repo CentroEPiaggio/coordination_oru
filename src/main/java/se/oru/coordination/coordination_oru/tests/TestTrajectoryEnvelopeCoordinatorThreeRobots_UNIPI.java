@@ -83,7 +83,36 @@ public class TestTrajectoryEnvelopeCoordinatorThreeRobots_UNIPI {
 			@Override
 			public void beforeTrackingFinished() { }
 		};
-		tec.addTrackingCallback(1, cb);
+
+		// Diagnostic viz for Robot 1
+		TrackingCallback cb_R1 = new TrackingCallback(null) {
+			
+			@Override
+			public void onTrackingStart() { }
+			
+			@Override
+			public void onTrackingFinished() { }
+			
+			@Override
+			public String[] onPositionUpdate() {
+				// AbstractTrajectoryEnvelopeTracker tracker = trackers.get(robotID);
+				// RobotReport rr = tracker.getRobotReport(); 
+				RobotReport rr = tec.getRobotReport(this.myTE.getRobotID());
+				String rrStr = this.myTE.getRobotID() + " " + " X: " + rr.getPose().getX();
+				return new String[] {"R1:", rrStr};
+			}
+			
+			@Override
+			public void onNewGroundEnvelope() { }
+			
+			@Override
+			public void beforeTrackingStart() { }
+			
+			@Override
+			public void beforeTrackingFinished() { }
+		};
+
+		tec.addTrackingCallback(1, cb_R1);
 		tec.addTrackingCallback(2, cb);
 		tec.addTrackingCallback(3, cb);
 		
