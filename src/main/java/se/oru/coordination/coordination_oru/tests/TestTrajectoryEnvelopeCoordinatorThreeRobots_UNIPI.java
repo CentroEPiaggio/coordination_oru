@@ -98,8 +98,14 @@ public class TestTrajectoryEnvelopeCoordinatorThreeRobots_UNIPI {
 				// AbstractTrajectoryEnvelopeTracker tracker = trackers.get(robotID);
 				// RobotReport rr = tracker.getRobotReport(); 
 				RobotReport rr = tec.getRobotReport(this.myTE.getRobotID());
-				String rrStr = this.myTE.getRobotID() + " " + " X: " + rr.getPose().getX();
-				return new String[] {"R1:", rrStr};
+				String rrStr = String.valueOf(this.myTE.getRobotID());
+
+				RobotReport rr_other = tec.getRobotReport(2);
+				double distance = 
+					Math.sqrt( 
+						Math.pow(rr.getPose().getX() - rr_other.getPose().getX(), 2) 
+						+ Math.pow(rr.getPose().getY() - rr_other.getPose().getY(), 2));
+				return new String[] {"R1:", rrStr, " Distance from robot 2: ", Double.toString(distance)};
 			}
 			
 			@Override
