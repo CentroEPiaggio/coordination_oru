@@ -108,7 +108,15 @@ public class TestTrajectoryEnvelopeCoordinatorThreeRobots_UNIPI {
 					Math.sqrt( 
 						Math.pow(rr.getPose().getX() - rr_other.getPose().getX(), 2) 
 						+ Math.pow(rr.getPose().getY() - rr_other.getPose().getY(), 2));
-				return new String[] {"R1:", rrStr, " Distance from robot 2: ", Double.toString(distance)};
+
+				boolean[][] connections = new boolean[3][3];
+
+				if(distance < 10.0*2)
+					connections[this.myTE.getRobotID()-1][2-1] = true;
+				else
+					connections[this.myTE.getRobotID()-1][2-1] = false;
+
+				return new String[] {"R1:", rrStr, " Distance from robot 2: ", Double.toString(distance), " close: ",Boolean.toString(connections[this.myTE.getRobotID()-1][2-1])};
 			}
 			
 			@Override
