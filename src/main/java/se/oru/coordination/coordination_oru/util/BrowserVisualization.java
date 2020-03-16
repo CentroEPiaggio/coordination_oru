@@ -26,7 +26,7 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Polygon;
 import com.vividsolutions.jts.geom.util.AffineTransformation;
-
+ import com.vividsolutions.jts.util.*;
 import se.oru.coordination.coordination_oru.RobotReport;
 
 public class BrowserVisualization implements FleetVisualization {
@@ -201,6 +201,9 @@ public class BrowserVisualization implements FleetVisualization {
 		String jsonStringArrow = "{ \"operation\" : \"addGeometry\", \"data\" : " + this.geometryToJSONString("_"+name, arrowGeom, "#ffffff", -1, true, null) + "}";
 		enqueueMessage(jsonString);
 		enqueueMessage(jsonStringArrow);
+		Geometry circleGeom = createCircle(x, y, COLLISION_RADIUS);
+		String jsonStringCircle = "{ \"operation\" : \"addGeometry\", \"data\" : " + this.geometryToJSONString("_"+name, circleGeom, "#ff0000", -1, true, extraData) + "}";
+		enqueueMessage(jsonStringCircle);
 	}
 	
 	@Override
@@ -227,8 +230,9 @@ public class BrowserVisualization implements FleetVisualization {
 		enqueueMessage(jsonStringArrow);
 
 		// use COLLISION_RADIUS
-		// Geometry circleGeom =
-		// String jsonStringCircle = "{ \"operation\" : \"addGeometry\", \"data\" : " + this.geometryToJSONString(name, geom, "#ff0000", -1, true, extraData) + "}";
+		Geometry circleGeom = createCircle(x, y, COLLISION_RADIUS);
+		String jsonStringCircle = "{ \"operation\" : \"addGeometry\", \"data\" : " + this.geometryToJSONString("_"+name, circleGeom, "#ff0000", -1, true, extraData) + "}";
+		enqueueMessage(jsonStringCircle);
 	}
 
 	@Override
@@ -236,8 +240,15 @@ public class BrowserVisualization implements FleetVisualization {
 		Geometry arrow = createArrow(rrWaiting.getPose(), rrDriving.getPose());
 		String jsonString = "{ \"operation\" : \"addGeometry\", \"data\" : " + this.geometryToJSONString(dependencyDescriptor, arrow, "#adccff", 1000, true, null) + "}";
 		enqueueMessage(jsonString);
+
 	}
-	
+	 public static Geometry createCircle(double x, double y, double RADIUS) {
+  GeometricShapeFactory shapeFactory = new GeometricShapeFactory();
+  shapeFactory.setNumPoints(32);
+  shapeFactory.setCentre(new Coordinate(x, y));
+  shapeFactory.setSize(RADIUS * 2);
+  return shapeFactory.createCircle();
+}
 	private String geometryToJSONString(String name, Geometry geom, String color, long age, boolean filled, String extraData) {
 		String ret = "{ \"name\" : \"" + name + "\", \"color\" : \"" + color + "\", ";
 		if (age > 0) ret += " \"age\" : " + age + ", ";
@@ -259,6 +270,7 @@ public class BrowserVisualization implements FleetVisualization {
 		Geometry geom = dom.getGeometry();
 		String jsonString = "{ \"operation\" : \"addGeometry\", \"data\" : " + this.geometryToJSONString("_"+te.getID(), geom, "#efe007", -1, false, null) + "}";
 		enqueueMessage(jsonString);
+
 	}
 
 	@Override
