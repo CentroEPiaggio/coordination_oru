@@ -1787,6 +1787,25 @@ public abstract class AbstractTrajectoryEnvelopeCoordinator {
 			//metaCSPLogger.finest("Dist R" + rr1.getRobotID() + " = " + dist1 + "; Dist R" + rr2.getRobotID() + " = " + dist2);
 			return dist1 > dist2 ? 1 : -1;
 		}
+		else if(!(rr1.getPathIndex() >= cs.getTe1Start()) && rr2.getPathIndex() >= cs.getTe2Start()) {
+			return -1;
+		}
+		else if((rr1.getPathIndex() >= cs.getTe1Start()) && !(rr2.getPathIndex() >= cs.getTe2Start())){
+			return 1;
+		}
+		else if(!(rr1.getPathIndex() >= cs.getTe1Start()) && !(rr2.getPathIndex() >= cs.getTe2Start())){
+			PoseSteering[] pathRobot1 = cs.getTe1().getTrajectory().getPoseSteering();
+			PoseSteering[] pathRobot2 = cs.getTe2().getTrajectory().getPoseSteering();
+			double dist1 = 0.0;
+			double dist2 = 0.0;
+			for (int i = rr1.getPathIndex(); i < cs.getTe1Start()-1; i++) {
+				dist1 += pathRobot1[i].getPose().getPosition().distance(pathRobot1[i+1].getPose().getPosition());
+			}
+			for (int i = rr2.getPathIndex(); i < cs.getTe2Start()-1; i++) {
+				dist2 += pathRobot2[i].getPose().getPosition().distance(pathRobot2[i+1].getPose().getPosition());
+			}
+			return dist2 > dist1 ? 1 : -1;
+		}
 		return 0;
 	}
 
