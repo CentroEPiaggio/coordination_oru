@@ -903,6 +903,11 @@ public abstract class AbstractTrajectoryEnvelopeCoordinator {
 
 	protected boolean checkDist(HashMap<Integer,RobotReport> currentReports,TrajectoryEnvelope Env1, TrajectoryEnvelope Env2, double RADIUS) {
 
+  							int minStart1 = currentReports.containsKey(Env1.getRobotID()) ? currentReports.get(Env1.getRobotID()).getPathIndex() : -1;
+							int minStart2 = currentReports.containsKey(Env2.getRobotID()) ? currentReports.get(Env2.getRobotID()).getPathIndex() : -1;
+
+							if(minStart1==-1 || minStart2 ==-1) return true;
+
 							RobotReport robotReport1 = currentReports.get(Env1.getRobotID());
 							RobotReport robotReport2 = currentReports.get(Env2.getRobotID());
 							double distance = 
@@ -910,9 +915,10 @@ public abstract class AbstractTrajectoryEnvelopeCoordinator {
 								Math.pow(robotReport1.getPose().getX() - robotReport2.getPose().getX(), 2) 
 								+ Math.pow(robotReport1.getPose().getY() - robotReport2.getPose().getY(), 2));
 							double maxDimensionOfBiggestRobot = Math.max(getMaxFootprintDimension(Env1.getRobotID()), getMaxFootprintDimension(Env2.getRobotID()));
-						    // double radius = maxDimensionOfBiggestRobot
+						    double radius = Math.max(2.5*maxDimensionOfBiggestRobot,4);
+							
 							if(distance == 0) return false;
-						    return distance < 2.5*maxDimensionOfBiggestRobot;
+						    return distance < radius;
 
 
 
@@ -985,7 +991,7 @@ public abstract class AbstractTrajectoryEnvelopeCoordinator {
 							double maxDimensionOfSmallestRobot = Math.min(getMaxFootprintDimension(drivingEnvelopes.get(i).getRobotID()), getMaxFootprintDimension(currentParkingEnvelopes.get(j).getRobotID()));
 							for (CriticalSection cs : getCriticalSections(null, null, drivingEnvelopes.get(i), minStart1, currentParkingEnvelopes.get(j), minStart2, this.checkEscapePoses, maxDimensionOfSmallestRobot)) {
 									this.allCriticalSections.add(cs);	
-									//metaCSPLogger.info("computeCriticalSections(): add (3) " + cs);
+									// metaCSPLogger.info("computeCriticalSections(): add (3) " + minStart2);
 							}
 						}
 					}
