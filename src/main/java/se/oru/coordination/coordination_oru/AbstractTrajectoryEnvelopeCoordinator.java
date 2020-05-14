@@ -909,8 +909,10 @@ public abstract class AbstractTrajectoryEnvelopeCoordinator {
 							Math.sqrt( 
 								Math.pow(robotReport1.getPose().getX() - robotReport2.getPose().getX(), 2) 
 								+ Math.pow(robotReport1.getPose().getY() - robotReport2.getPose().getY(), 2));
+							double maxDimensionOfBiggestRobot = Math.max(getMaxFootprintDimension(Env1.getRobotID()), getMaxFootprintDimension(Env2.getRobotID()));
+						    // double radius = maxDimensionOfBiggestRobot
 							if(distance == 0) return false;
-						    return distance < RADIUS;
+						    return distance < 2.5*maxDimensionOfBiggestRobot;
 
 
 
