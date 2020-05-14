@@ -905,18 +905,39 @@ public abstract class AbstractTrajectoryEnvelopeCoordinator {
 
   							int minStart1 = currentReports.containsKey(Env1.getRobotID()) ? currentReports.get(Env1.getRobotID()).getPathIndex() : -1;
 							int minStart2 = currentReports.containsKey(Env2.getRobotID()) ? currentReports.get(Env2.getRobotID()).getPathIndex() : -1;
+							double x1, y1;
+							double x2, y2;
+							if(minStart1==-1) {
+									x1 = Env1.getTrajectory().getPose()[0].getX();
+									y1 = Env1.getTrajectory().getPose()[0].getY();
 
-							if(minStart1==-1 || minStart2 ==-1) return true;
+							}
+							else{
+									RobotReport robotReport1 = currentReports.get(Env1.getRobotID());
+									x1 = robotReport1.getPose().getX();
+									y1 = robotReport1.getPose().getY();
 
-							RobotReport robotReport1 = currentReports.get(Env1.getRobotID());
-							RobotReport robotReport2 = currentReports.get(Env2.getRobotID());
+							}
+
+
+							if(minStart2==-1) {
+									x2 = Env2.getTrajectory().getPose()[0].getX();
+									y2 = Env2.getTrajectory().getPose()[0].getY();
+							}
+							else{
+									RobotReport robotReport2 = currentReports.get(Env2.getRobotID());
+									x2 = robotReport2.getPose().getX();
+									y2 = robotReport2.getPose().getY();
+							}
+
 							double distance = 
 							Math.sqrt( 
-								Math.pow(robotReport1.getPose().getX() - robotReport2.getPose().getX(), 2) 
-								+ Math.pow(robotReport1.getPose().getY() - robotReport2.getPose().getY(), 2));
+								Math.pow(x1-x2, 2) 
+								+ Math.pow(y1-y2, 2));
+		
 							double maxDimensionOfBiggestRobot = Math.max(getMaxFootprintDimension(Env1.getRobotID()), getMaxFootprintDimension(Env2.getRobotID()));
-						    double radius = Math.max(2.5*maxDimensionOfBiggestRobot,4);
-							
+						    double radius = Math.max(2.5*maxDimensionOfBiggestRobot,10);
+
 							if(distance == 0) return false;
 						    return distance < radius;
 
@@ -1773,8 +1794,10 @@ public abstract class AbstractTrajectoryEnvelopeCoordinator {
 							computeCriticalSections();
 							startTrackingAddedMissions();
 						}
-						updateDependencies();
-						
+						// updateDependencies();
+					    computeCriticalSections();
+						updateDependencies();											
+
 						if (!quiet) printStatistics();
 						if (overlay) overlayStatistics();
 					}

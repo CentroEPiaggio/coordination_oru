@@ -285,7 +285,7 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 
 	private boolean checkdistwait(HashMap<Integer,RobotReport> currentReports, Dependency dep) {
 
-		if(dep.getWaitingTrajectoryEnvelope()!=null && dep.getDrivingTrajectoryEnvelope()!=null) {
+		if(dep.getWaitingTrajectoryEnvelope()!=null) {
 
 		RobotReport rr1 = currentReports.get(dep.getWaitingRobotID());
 		Pose waitp = dep.getWaitingPose();
@@ -294,6 +294,8 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 						Math.sqrt( 
 								Math.pow(waitp.getX() - rr1.getPose().getX(), 2) 
 								+ Math.pow(waitp.getY() - rr1.getPose().getY(), 2));
+		metaCSPLogger.info("Distance " + dist_wait);
+
 		return dist_wait < TH;
 	}
 	else return true;
@@ -595,16 +597,14 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 	@Override
 	protected void updateDependencies() {
 		synchronized(solver) {
-			if (this.avoidDeadlockGlobally) globalCheckAndRevise();
+			if (this.avoidDeadlockGlobally) localCheckAndRevise();
 			else localCheckAndRevise();
 		}
 	}
 	
 	protected void localCheckAndRevise() {
 
-		//System.out.println("Caller of updateDependencies(): " + Thread.currentThread().getStackTrace()[2]);
-		allCriticalSections.clear();
-		computeCriticalSections();
+		// allCriticalSections.clear();
 		synchronized(solver) {
 			HashMap<Integer,RobotReport> currentReports = new HashMap<Integer,RobotReport>();
 			HashMap<Integer,HashSet<Dependency>> currentDeps = new HashMap<Integer,HashSet<Dependency>>();
@@ -640,7 +640,7 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 			}
 			
 
-			
+
 			//Make deps from critical sections, and remove obsolete critical sections
 			synchronized(allCriticalSections) {
 				
@@ -671,18 +671,19 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 						metaCSPLogger.finest("Obsolete critical section\n\t" + cs);
 						continue;
 					}
-	
+
 					//The critical section could be still active. One of the two robots could already have exited the critical section,
 					//but the information has not been received.
 					int waitingPoint = -1;
 					
 					if (robotTracker1 instanceof TrajectoryEnvelopeTrackerDummy || robotTracker2 instanceof TrajectoryEnvelopeTrackerDummy) {
-						
+						// metaCSPLogger.finest("PARKING");
 						boolean createAParkingDep = false;
 						this.isBlocked = true;
-						
+
 						//Robot1 is parking in critical section. If it is the driver, make robot 2 wait.
 						if (robotTracker1 instanceof TrajectoryEnvelopeTrackerDummy) {
+
 							drivingRobotID = robotReport1.getRobotID();
 							waitingRobotID = robotReport2.getRobotID();
 							drivingTE = robotTracker1.getTrajectoryEnvelope();
@@ -690,14 +691,16 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 							drivingTracker = robotTracker1;
 							waitingTracker = robotTracker2;
 							waitingPoint = getCriticalPoint(robotReport2.getRobotID(), cs, robotReport1.getPathIndex());
-	
+
 							if (!communicatedCPs.containsKey(waitingTracker) && robotReport1.getPathIndex() <= waitingPoint 
-									|| communicatedCPs.containsKey(waitingTracker) && communicatedCPs.get(waitingTracker).getFirst() != -1 && communicatedCPs.get(waitingTracker).getFirst() <= waitingPoint) {
+									|| communicatedCPs.containsKey(waitingTracker) && communicatedCPs.get(waitingTracker).getFirst() <= waitingPoint) {
 								createAParkingDep = true;
+
 							}
 							
 						}
 						else if (robotTracker2 instanceof TrajectoryEnvelopeTrackerDummy) {
+
 							drivingRobotID = robotReport2.getRobotID();
 							waitingRobotID = robotReport1.getRobotID();
 							drivingTE = robotTracker2.getTrajectoryEnvelope();
@@ -705,9 +708,12 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 							drivingTracker = robotTracker2;
 							waitingTracker = robotTracker1;
 							waitingPoint = getCriticalPoint(robotReport1.getRobotID(), cs, robotReport2.getPathIndex());
-													
-							if (!communicatedCPs.containsKey(waitingTracker) && robotReport2.getPathIndex() <= waitingPoint
-									|| communicatedCPs.containsKey(waitingTracker) && communicatedCPs.get(waitingTracker).getFirst() != -1 && communicatedCPs.get(waitingTracker).getFirst() <= waitingPoint) {
+							// boolean see = communicatedCPs.get(waitingTracker).getFirst() != -1 && communicatedCPs.get(waitingTracker).getFirst() <= waitingPoint;
+							System.out.println("Caller of updateDependencies(): " + communicatedCPs.containsKey(waitingTracker));
+							// createAParkingDep = true;						
+
+							if ((!communicatedCPs.containsKey(waitingTracker) && robotReport2.getPathIndex() <= waitingPoint)
+									|| (communicatedCPs.containsKey(waitingTracker) && communicatedCPs.get(waitingTracker).getFirst() <= waitingPoint)) {
 								createAParkingDep = true;						
 							}
 						}
@@ -723,7 +729,6 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 						}
 					}
 					else {//Both robots are driving, let's determine an ordering for them through this critical section
-						
 						boolean update = true;
 						synchronized(lockedRobots) {
 							if (lockedRobots.containsValue(cs) && communicatedCPs.containsKey(robotTracker1) && communicatedCPs.containsKey(robotTracker2)) {
@@ -1125,7 +1130,7 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 			//... and all the critical sections which are currently alive.
 			for (CriticalSection cs : allCriticalSections) {
 				if ((cs.getTe1().getRobotID() == robotID || cs.getTe2().getRobotID() == robotID) && !toRemove.contains(cs)) {
-					toRemove.add(cs);
+					// toRemove.add(cs);
 					metaCSPLogger.info("WARNING: removing critical section which was not associated to a dependency.");
 					//increment the counter
 					if (cs.getTe1().getRobotID() == robotID && (cs.getTe1Start() <= lastWaitingPoint || lastWaitingPoint == -1) || 
@@ -1289,7 +1294,7 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 					for (int ID : lockedRobotIDs) lockedRobots.remove(ID);
 					metaCSPLogger.finest("Unlocking robots: " + lockedRobotIDs.toString());
 				}
-				
+			    computeCriticalSections();
 				updateDependencies();											
 				
 			}
