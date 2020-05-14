@@ -91,7 +91,7 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 	
 	protected boolean isDeadlocked = false;
 	protected boolean isBlocked = false;
-	
+	protected double TH = 10;
 	
 	/**
 	 * Get whether there is a robot in a blocked situation (waiting for a parked robot).
@@ -282,8 +282,25 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 		}
 		return g;
 	}
+
+	private boolean checkdistwait(HashMap<Integer,RobotReport> currentReports, Dependency dep) {
+
+		if(dep.getWaitingTrajectoryEnvelope()!=null && dep.getDrivingTrajectoryEnvelope()!=null) {
+
+		RobotReport rr1 = currentReports.get(dep.getWaitingRobotID());
+		Pose waitp = dep.getWaitingPose();
+
+		double dist_wait = 
+						Math.sqrt( 
+								Math.pow(waitp.getX() - rr1.getPose().getX(), 2) 
+								+ Math.pow(waitp.getY() - rr1.getPose().getY(), 2));
+		return dist_wait < TH;
+	}
+	else return true;
+
+	}
 	
-	private HashSet<Dependency> computeClosestDependencies(HashMap<Integer,HashSet<Dependency>> allDeps, HashMap<Integer, HashSet<Dependency>> artificialDeps) {
+	private HashSet<Dependency> computeClosestDependencies(HashMap<Integer,HashSet<Dependency>> allDeps, HashMap<Integer, HashSet<Dependency>> artificialDeps, HashMap<Integer,RobotReport> currentReports) {
 		
 		HashSet<Dependency> closestDeps = new HashSet<Dependency>();
 		
@@ -309,13 +326,20 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 				Dependency firstDep = null;
 				Dependency firstArtificialDep = null;
 				if (allDeps.containsKey(robotID)){
-					firstDep = allDepsTree.get(robotID).first();
+
+				    Dependency dep = null;
+				    dep = allDepsTree.get(robotID).first();
+
+					if(checkdistwait(currentReports,dep)) firstDep = allDepsTree.get(robotID).first();
 				}
 				if (artificialDeps.containsKey(robotID)) {
 					firstArtificialDep = artificialDepsTree.get(robotID).first();
 					metaCSPLogger.info("Artificial critical point " + firstArtificialDep.getWaitingPoint() + " for Robot" + firstArtificialDep.getWaitingRobotID() +".");
 				}
-				
+				if (firstDep == null && firstArtificialDep == null) {
+					return closestDeps;
+				}
+
 				Dependency depToSend = null; 
 				if (firstDep != null)
 					depToSend = firstArtificialDep != null ? (firstDep.compareTo(firstArtificialDep) < 0 ? firstDep : firstArtificialDep) : firstDep;
@@ -439,7 +463,7 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 						depsToCSTmp.put(revDep, cs);
 
 						//update currentDeps
-						HashSet<Dependency> currentDepsTmp = computeClosestDependencies(allDepsTmp, artificialDeps);
+						HashSet<Dependency> currentDepsTmp = computeClosestDependencies(allDepsTmp, artificialDeps,currentReports);
 						SimpleDirectedGraph<Integer,Dependency> gTmp = depsToGraph(currentDepsTmp);
 						
 						//compute cycles again. If the number of cycles is lower, keep this solution
@@ -914,7 +938,7 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 			synchronized(currentDependencies) {
 				
 				//FIXME: already synchronized (so maybe is ok currentDependencies = computeClosestDependencies(currentDeps, artificialDependencies);)
-				HashSet<Dependency> closestDeps  = computeClosestDependencies(currentDeps, artificialDependencies);
+				HashSet<Dependency> closestDeps  = computeClosestDependencies(currentDeps, artificialDependencies,currentReports);
 				currentDependencies.clear();
 				currentDependencies.addAll(closestDeps);
 				
@@ -1201,7 +1225,6 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 				envelopesToTrack.add(newTE);
 				
 				//Recompute CSs involving this robot
-				computeCriticalSections();
 				
 				//------------------ (static re-plan or starting from critical section) ----------------------
 				if (useStaticReplan || breakingPathIndex == 0) {
@@ -2119,7 +2142,7 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 			synchronized(currentDependencies) {
 				
 				//FIXME: already synchronized (so maybe is ok currentDependencies = computeClosestDependencies(currentDeps, artificialDependencies);)
-				HashSet<Dependency> closestDeps  = computeClosestDependencies(currentDeps, artificialDependencies);
+				HashSet<Dependency> closestDeps  = computeClosestDependencies(currentDeps, artificialDependencies,currentReports);
 				currentDependencies.clear();
 				currentDependencies.addAll(closestDeps);
 				
