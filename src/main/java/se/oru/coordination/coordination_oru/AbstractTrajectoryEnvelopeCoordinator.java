@@ -130,7 +130,7 @@ public abstract class AbstractTrajectoryEnvelopeCoordinator {
 	public static int MAX_TX_DELAY = NetworkConfiguration.getMaximumTxDelay();
 	protected double maxFaultsProbability = NetworkConfiguration.PROBABILITY_OF_PACKET_LOSS;
 	protected int numberOfReplicas = 1;
-	
+	public static double COMM_RADIUS = 10;
 	//State knowledge
 	protected HashMap<Integer,Boolean> isDriving = new HashMap<Integer, Boolean>();
 	
@@ -900,6 +900,22 @@ public abstract class AbstractTrajectoryEnvelopeCoordinator {
 		this.comparators.addComparator(c);
 	}
 	
+
+	protected boolean checkDist(HashMap<Integer,RobotReport> currentReports,TrajectoryEnvelope Env1, TrajectoryEnvelope Env2, double RADIUS) {
+
+							RobotReport robotReport1 = currentReports.get(Env1.getRobotID());
+							RobotReport robotReport2 = currentReports.get(Env2.getRobotID());
+							double distance = 
+							Math.sqrt( 
+								Math.pow(robotReport1.getPose().getX() - robotReport2.getPose().getX(), 2) 
+								+ Math.pow(robotReport1.getPose().getY() - robotReport2.getPose().getY(), 2));
+							if(distance == 0) return false;
+						    return distance < RADIUS;
+
+
+
+
+	}
 	/**
 	 * Update the set of current critical sections. This should be called every time
 	 * a new set of {@link Mission}s has been successfully added.
@@ -931,7 +947,7 @@ public abstract class AbstractTrajectoryEnvelopeCoordinator {
 				//Compute critical sections between driving and new envelopes
 				for (int i = 0; i < drivingEnvelopes.size(); i++) {
 					for (int j = 0; j < envelopesToTrack.size(); j++) {	
-						if (drivingEnvelopes.get(i).getRobotID() != envelopesToTrack.get(j).getRobotID()) {
+						if (drivingEnvelopes.get(i).getRobotID() != envelopesToTrack.get(j).getRobotID() && checkDist(currentReports,drivingEnvelopes.get(i), envelopesToTrack.get(j), COMM_RADIUS)) {
 							int minStart1 = currentReports.containsKey(drivingEnvelopes.get(i).getRobotID()) ? currentReports.get(drivingEnvelopes.get(i).getRobotID()).getPathIndex() : -1;
 							int minStart2 = currentReports.containsKey(envelopesToTrack.get(j).getRobotID()) ? currentReports.get(envelopesToTrack.get(j).getRobotID()).getPathIndex() : -1;
 							double maxDimensionOfSmallestRobot = Math.min(getMaxFootprintDimension(drivingEnvelopes.get(i).getRobotID()), getMaxFootprintDimension(envelopesToTrack.get(j).getRobotID()));
@@ -946,7 +962,7 @@ public abstract class AbstractTrajectoryEnvelopeCoordinator {
 				//Compute critical sections between new envelopes
 				for (int i = 0; i < envelopesToTrack.size(); i++) {
 					for (int j = i+1; j < envelopesToTrack.size(); j++) {
-						if (envelopesToTrack.get(i).getRobotID() != envelopesToTrack.get(j).getRobotID()) {
+						if (envelopesToTrack.get(i).getRobotID() != envelopesToTrack.get(j).getRobotID() && checkDist(currentReports,envelopesToTrack.get(i), envelopesToTrack.get(j), COMM_RADIUS)) {
 							int minStart1 = currentReports.containsKey(envelopesToTrack.get(i).getRobotID()) ? currentReports.get(envelopesToTrack.get(i).getRobotID()).getPathIndex() : -1;
 							int minStart2 = currentReports.containsKey(envelopesToTrack.get(j).getRobotID()) ? currentReports.get(envelopesToTrack.get(j).getRobotID()).getPathIndex() : -1;
 							double maxDimensionOfSmallestRobot = Math.min(getMaxFootprintDimension(envelopesToTrack.get(i).getRobotID()), getMaxFootprintDimension(envelopesToTrack.get(j).getRobotID()));
@@ -961,7 +977,7 @@ public abstract class AbstractTrajectoryEnvelopeCoordinator {
 				//Compute critical sections between driving envelopes and current parking envelopes	
 				for (int i = 0; i < drivingEnvelopes.size(); i++) {
 					for (int j = 0; j < currentParkingEnvelopes.size(); j++) {
-						if (drivingEnvelopes.get(i).getRobotID() != currentParkingEnvelopes.get(j).getRobotID()) {
+						if (drivingEnvelopes.get(i).getRobotID() != currentParkingEnvelopes.get(j).getRobotID() && checkDist(currentReports,drivingEnvelopes.get(i), currentParkingEnvelopes.get(j), COMM_RADIUS)) {
 							int minStart1 = currentReports.containsKey(drivingEnvelopes.get(i).getRobotID()) ? currentReports.get(drivingEnvelopes.get(i).getRobotID()).getPathIndex() : -1;
 							int minStart2 = currentReports.containsKey(currentParkingEnvelopes.get(j).getRobotID()) ? currentReports.get(currentParkingEnvelopes.get(j).getRobotID()).getPathIndex() : -1;
 							double maxDimensionOfSmallestRobot = Math.min(getMaxFootprintDimension(drivingEnvelopes.get(i).getRobotID()), getMaxFootprintDimension(currentParkingEnvelopes.get(j).getRobotID()));
@@ -976,7 +992,7 @@ public abstract class AbstractTrajectoryEnvelopeCoordinator {
 				//Compute critical sections between NEW driving envelopes and current parking envelopes	
 				for (int i = 0; i < envelopesToTrack.size(); i++) {
 					for (int j = 0; j < currentParkingEnvelopes.size(); j++) {
-						if (envelopesToTrack.get(i).getRobotID() != currentParkingEnvelopes.get(j).getRobotID()) {
+						if (envelopesToTrack.get(i).getRobotID() != currentParkingEnvelopes.get(j).getRobotID() && checkDist(currentReports,envelopesToTrack.get(i), currentParkingEnvelopes.get(j), COMM_RADIUS)) {
 							int minStart1 = currentReports.containsKey(envelopesToTrack.get(i).getRobotID()) ? currentReports.get(envelopesToTrack.get(i).getRobotID()).getPathIndex() : -1;
 							int minStart2 = currentReports.containsKey(currentParkingEnvelopes.get(j).getRobotID()) ? currentReports.get(currentParkingEnvelopes.get(j).getRobotID()).getPathIndex() : -1;
 							double maxDimensionOfSmallestRobot = Math.min(getMaxFootprintDimension(envelopesToTrack.get(i).getRobotID()), getMaxFootprintDimension(currentParkingEnvelopes.get(j).getRobotID()));
@@ -986,7 +1002,23 @@ public abstract class AbstractTrajectoryEnvelopeCoordinator {
 							}
 						}
 					}
-				}			
+				}
+
+
+				for (int i = 0; i < drivingEnvelopes.size(); i++) {
+					for (int j = 0; j < drivingEnvelopes.size(); j++) {	
+						if (drivingEnvelopes.get(i).getRobotID() != drivingEnvelopes.get(j).getRobotID() && checkDist(currentReports,drivingEnvelopes.get(i), drivingEnvelopes.get(j), COMM_RADIUS)) {
+							int minStart1 = currentReports.containsKey(drivingEnvelopes.get(i).getRobotID()) ? currentReports.get(drivingEnvelopes.get(i).getRobotID()).getPathIndex() : -1;
+							int minStart2 = currentReports.containsKey(drivingEnvelopes.get(j).getRobotID()) ? currentReports.get(drivingEnvelopes.get(j).getRobotID()).getPathIndex() : -1;
+							double maxDimensionOfSmallestRobot = Math.min(getMaxFootprintDimension(drivingEnvelopes.get(i).getRobotID()), getMaxFootprintDimension(drivingEnvelopes.get(j).getRobotID()));
+							for (CriticalSection cs : getCriticalSections(null, null, drivingEnvelopes.get(i), minStart1, drivingEnvelopes.get(j), minStart2, this.checkEscapePoses, maxDimensionOfSmallestRobot)) {
+									this.allCriticalSections.add(cs);
+									//metaCSPLogger.info("computeCriticalSections(): add (1) " + cs); 								
+							}
+						}
+					}
+				}	
+			
 			}
 			filterCriticalSections();
 			
@@ -1786,6 +1818,25 @@ public abstract class AbstractTrajectoryEnvelopeCoordinator {
 			}
 			//metaCSPLogger.finest("Dist R" + rr1.getRobotID() + " = " + dist1 + "; Dist R" + rr2.getRobotID() + " = " + dist2);
 			return dist1 > dist2 ? 1 : -1;
+		}
+		else if(!(rr1.getPathIndex() >= cs.getTe1Start()) && rr2.getPathIndex() >= cs.getTe2Start()) {
+			return -1;
+		}
+		else if((rr1.getPathIndex() >= cs.getTe1Start()) && !(rr2.getPathIndex() >= cs.getTe2Start())){
+			return 1;
+		}
+		else if(!(rr1.getPathIndex() >= cs.getTe1Start()) && !(rr2.getPathIndex() >= cs.getTe2Start())){
+			PoseSteering[] pathRobot1 = cs.getTe1().getTrajectory().getPoseSteering();
+			PoseSteering[] pathRobot2 = cs.getTe2().getTrajectory().getPoseSteering();
+			double dist1 = 0.0;
+			double dist2 = 0.0;
+			for (int i = rr1.getPathIndex(); i < cs.getTe1Start()-1; i++) {
+				dist1 += pathRobot1[i].getPose().getPosition().distance(pathRobot1[i+1].getPose().getPosition());
+			}
+			for (int i = rr2.getPathIndex(); i < cs.getTe2Start()-1; i++) {
+				dist2 += pathRobot2[i].getPose().getPosition().distance(pathRobot2[i+1].getPose().getPosition());
+			}
+			return dist2 > dist1 ? 1 : -1;
 		}
 		return 0;
 	}

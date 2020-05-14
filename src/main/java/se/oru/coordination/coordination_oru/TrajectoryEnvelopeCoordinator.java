@@ -579,6 +579,8 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 	protected void localCheckAndRevise() {
 
 		//System.out.println("Caller of updateDependencies(): " + Thread.currentThread().getStackTrace()[2]);
+		allCriticalSections.clear();
+		computeCriticalSections();
 		synchronized(solver) {
 			HashMap<Integer,RobotReport> currentReports = new HashMap<Integer,RobotReport>();
 			HashMap<Integer,HashSet<Dependency>> currentDeps = new HashMap<Integer,HashSet<Dependency>>();
@@ -1201,7 +1203,6 @@ public abstract class TrajectoryEnvelopeCoordinator extends AbstractTrajectoryEn
 				envelopesToTrack.add(newTE);
 				
 				//Recompute CSs involving this robot
-				computeCriticalSections();
 				
 				//------------------ (static re-plan or starting from critical section) ----------------------
 				if (useStaticReplan || breakingPathIndex == 0) {
